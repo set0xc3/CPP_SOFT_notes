@@ -1,0 +1,62 @@
+[
+  {
+    "label": "[build] app",
+    "command": "cmake -B build -G Ninja; cmake --build build --config Debug",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "[build:run] app",
+    "command": "cmake -B build -G Ninja; cmake --build build --config Debug; ./build/Debug/app.exe",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "[run] app",
+    "command": "./build/Debug/app.exe",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "[build] tests",
+    "command": "cmake -B build -G Ninja; cmake --build build --config Debug",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "[build:run] tests",
+    "command": "cmake -B build -G Ninja; cmake --build build --config Debug; ./build/Debug/tests.exe",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "[run] tests",
+    "command": "./build/Debug/tests.exe",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  }
+]
