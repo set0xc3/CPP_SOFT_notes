@@ -3,96 +3,10 @@
 #include <vendor/imgui/backends/imgui_impl_sdlrenderer3.h>
 #include <vendor/imgui/imgui.h>
 
-#include <algorithm>
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <optional>
-#include <string>
-#include <vector>
-#include <vendor/json/include/nlohmann/json.hpp>
-#include "src/ui.hpp"
+#include "ui/vault_manager.hpp"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
-
-namespace fs = std::filesystem;
-using json = nlohmann::json;
-
-class Tree {
- public:
-  struct Node {
-    fs::path path;
-    bool is_dir;
-    bool open;
-    std::vector<std::shared_ptr<Node>> children;
-  };
-
-  std::shared_ptr<Node> root;
-  fs::path selected;
-
-  Tree() {
-    root = std::make_shared<Node>();
-    root->path = fs::current_path();
-    root->is_dir = true;
-    root->open = false;
-
-    std::ifstream f("example.json");
-    json data = json::parse(f);
-    std::cout << data << std::endl;
-
-    refresh();
-  }
-
-  void refresh() {
-    if (root->is_dir) {
-      refresh_node(root);
-    }
-  }
-
- private:
-  void refresh_node(std::shared_ptr<Node> node) {
-    if (!node || !node->is_dir) return;
-
-    // node->children.clear();
-
-    // try {
-    //   for (const auto& entry : fs::directory_iterator(node->path)) {
-    //     auto child = std::make_shared<Node>();
-    //     child->path = entry.path();
-    //     child->is_dir = fs::is_directory(entry);
-    //     child->open = false;
-    //     node->children.push_back(child);
-    //   }
-    // } catch (...) {
-    // }
-  }
-
-  void draw_node(std::shared_ptr<Node> node) {
-    if (!node) return;
-
-    ImGuiTreeNodeFlags flags = (node->is_dir ? ImGuiTreeNodeFlags_OpenOnArrow
-                                             : ImGuiTreeNodeFlags_Leaf) |
-                               ImGuiTreeNodeFlags_SpanFullWidth;
-
-    // ImGui::TreeNodeEx("Vault", flags);
-
-    // if (node->is_dir && !node->open) {
-    //   refresh_node(node);
-    //   node->open = true;
-    // }
-
-    // for (auto &child : node->children) {
-    //   draw_node(child);
-    // }
-
-    // ImGui::TreePop();
-  }
-
- public:
-  void draw() { draw_node(root); }
-};
 
 int main() {
   // Setup SDL
@@ -148,8 +62,8 @@ int main() {
   // Main loop
   bool done = false;
 
-  std::unique_ptr<Tree> tree = std::make_unique<Tree>();
-  std::unique_ptr<ManagerVaults> manager_vaults = std::make_unique<ManagerVaults>();
+  std::unique_ptr<Saura::VaultManager> manager_vaults =
+      std::make_unique<Saura::VaultManager>();
 
   while (!done) {
     int window_width, window_height = 0;
@@ -180,9 +94,8 @@ int main() {
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
       manager_vaults->draw();
+      ImGui::End();
     }
-
-    ImGui::End();
 
     // Rendering
     ImGui::Render();

@@ -10,8 +10,9 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/$<CONFIG>")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/$<CONFIG>")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/$<CONFIG>")
 
+file(GLOB_RECURSE APP_FILES "src/*.cpp")
+add_executable(${PROJECT_NAME} ${APP_FILES})
 add_subdirectory(tests)
-add_executable(${PROJECT_NAME} src/main.cpp)
 
 # Добавляем корневую директорию проекта в include-пути
 target_include_directories(${PROJECT_NAME} PRIVATE
