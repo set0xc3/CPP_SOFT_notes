@@ -62,8 +62,10 @@ int main() {
   // Main loop
   bool done = false;
 
-  std::unique_ptr<Saura::VaultManager> manager_vaults =
+  std::unique_ptr<Saura::VaultManager> vault_manager =
       std::make_unique<Saura::VaultManager>();
+
+  vault_manager->init();
 
   while (!done) {
     int window_width, window_height = 0;
@@ -93,7 +95,7 @@ int main() {
     if (ImGui::Begin("Note Editor", nullptr,
                      ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
                          ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
-      manager_vaults->draw();
+      vault_manager->draw();
       ImGui::End();
     }
 

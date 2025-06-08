@@ -41,9 +41,14 @@ fs::path get_appdata_path() {
 }
 
 fs::path normalize_path(const fs::path& path) {
-  return fs::absolute(path.string()).lexically_normal();
-}
+    std::string clean_str = path.string();
+    clean_str.erase(std::remove(clean_str.begin(), clean_str.end(), '"'), clean_str.end());
+    clean_str.erase(std::remove(clean_str.begin(), clean_str.end(), '\''), clean_str.end());
 
+    fs::path cleaned_path(clean_str);
+
+    return fs::absolute(cleaned_path).lexically_normal();
+}
 std::string to_forward_slashes(std::string path) {
     std::replace(path.begin(), path.end(), '\\', '/');
     return path;

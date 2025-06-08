@@ -34,6 +34,12 @@ file(GLOB IMGUI_SOURCES
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
 
+## ImGui FileBrowser
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${PROJECT_SOURCE_DIR}/vendor/imgui-filebrowser
+)
+
 # Указываем, где искать заголовки для imgui
 target_include_directories(imgui PUBLIC ${PROJECT_SOURCE_DIR}/vendor/imgui)
 

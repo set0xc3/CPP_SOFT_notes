@@ -20,6 +20,7 @@ class Vault {
     std::vector<std::shared_ptr<Node>> children;
   };
 
+  fs::path path;
   std::shared_ptr<Node> root;
 
   Vault();
