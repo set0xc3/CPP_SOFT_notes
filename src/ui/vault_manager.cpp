@@ -3,6 +3,7 @@
 #include <vendor/imgui/imgui.h>
 #include <vendor/imgui/imgui_internal.h>
 
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -10,9 +11,10 @@
 #include <memory>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <utils.hpp>
 
 #include "ui/vault.hpp"
+
+#include <utils.hpp>
 
 namespace Saura {
 void VaultManager::init() {
@@ -21,8 +23,9 @@ void VaultManager::init() {
     auto& path = vault.key();
 
     std::shared_ptr<Vault> new_vault = std::make_shared<Vault>();
-    new_vault->path = path;
-    vaults[new_vault->path.string()] = new_vault;
+    new_vault->root = std::make_shared<Node>();
+    new_vault->root->path = path;
+    vaults[new_vault->root->path.string()] = new_vault;
   }
 }
 
@@ -90,42 +93,54 @@ void VaultManager::draw_vault_manager() {
     ImGui::EndPopup();
   }
 
-  if (ImGui::Button("Open")) {
+  if (ImGui::Button("Add")) {
     if (!std::string(vault_path_buff).empty()) {
-      std::shared_ptr<Vault> vault = std::make_shared<Vault>();
-      vault->path = vault_path_buff;
+      std::shared_ptr<Vault> new_vault = std::make_shared<Vault>();
+      new_vault->root->path = vault_path_buff;
 
       json new_config = read_config();
       // std::cout << vault->path << std::endl;
-      if (!new_config["vaults"].contains(normalize_path(vault->path))) {
+      if (!new_config["vaults"].contains(normalize_path(new_vault->root->path))) {
         std::cout << new_config << std::endl;
-        new_config["vaults"][vault->path.string()] = {
+        new_config["vaults"][new_vault->root->path.string()] = {
             {"ts", ""},
             {"open", false},
         };
         if (save_config(new_config)) {
-          vaults[vault->path.string()] = vault;
+          vaults[new_vault->root->path.string()] = new_vault;
         }
       }
     }
   }
   ImGui::SameLine();
-  ImGui::SetNextItemWidth(200);
+  ImGui::SetNextItemWidth(300);
   ImGui::InputText("##open_vault", vault_path_buff, sizeof(vault_path_buff));
 
   ImGui::BeginChild("Tree", ImVec2(300, 0), true);
   for (const auto& [key, vault] : vaults) {
     bool is_selected = false;
-    if (ImGui::Selectable(vault.get()->path.string().c_str(), is_selected)) {
+    if (ImGui::Selectable(vault.get()->root->path.string().c_str(), is_selected)) {
       is_selected = !is_selected;
       hot_vault = vault;
+      fs::create_directory(hot_vault.lock().get()->root->path);
+      if (fs::exists(hot_vault.lock().get()->root->path)) {
+          // hot_vault.lock().get()->root.get()->children;
+      }
     }
   }
   ImGui::EndChild();
 }
 
 void VaultManager::draw_vault() {
-
+  if (ImGui::Button("<")) {
+    hot_vault.reset();
+  }
+  ImGui::SameLine();
+  if (hot_vault.lock().get() != nullptr) {
+    ImGui::Text("%s", hot_vault.lock().get()->root->path.string().c_str());
+    ImGui::BeginChild("Tree", ImVec2(300, 0), true);
+    hot_vault.lock()->draw();
+    ImGui::EndChild();
+  }
 }
-
 }  // namespace Saura

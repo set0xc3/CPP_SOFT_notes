@@ -9,12 +9,12 @@ namespace fs = std::filesystem;
 using json = nlohmann::json;
 
 TEST_CASE("get appdata and create app folder") {
-  fs::path appdata_path = get_appdata_path();
+  fs::path appdata_path = Saura::get_appdata_path();
   fs::path app_path = appdata_path / "SauraStudios" / "Notes";
   fs::path app_config = app_path / "config.json";
   fs::path test_config = "C:\\vault\\docs\\test";
 
-  test_config = normalize_path(test_config);
+  test_config = Saura::normalize_path(test_config);
   std::cout << test_config << std::endl;
 
   std::cout << app_path << std::endl;

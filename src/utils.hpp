@@ -1,57 +1,29 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
+#include <codecvt>
 #include <cstdlib>
 #include <filesystem>
+#include <iostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 
+namespace Saura {
+
 namespace fs = std::filesystem;
+fs::path get_appdata_path();
 
-fs::path get_appdata_path() {
-  fs::path res;
-  const char* appdata = nullptr;
+fs::path normalize_path(const fs::path& path);
 
-// Для MSVC и Clang-cl (режим MSVC)
-#if defined(_MSC_VER) || (defined(__clang__) && defined(_MSC_VER))
-  char* buffer = nullptr;
-  size_t len = 0;
-  errno_t err = _dupenv_s(&buffer, &len, "APPDATA");
-  if (err || buffer == nullptr) {
-    if (buffer) free(buffer);
-    throw std::runtime_error("APPDATA environment variable not found");
-  }
-  appdata = buffer;
-#else
-  // Для MinGW и других компиляторов
-  appdata = std::getenv("APPDATA");
-  if (!appdata) {
-    throw std::runtime_error("APPDATA environment variable not found");
-  }
-#endif
+std::string to_forward_slashes(std::string path);
 
-  res = fs::path(appdata);
+bool is_directory_modified(const fs::path& dir_path,
+                           fs::file_time_type& last_known_time);
 
-// Освобождаем буфер для MSVC/Clang-cl
-#if defined(_MSC_VER) || (defined(__clang__) && defined(_MSC_VER))
-  free(buffer);
-#endif
+// Функция для естественной сортировки (учитывает числа в строках)
+bool natural_compare(const std::string& a, const std::string& b);
 
-  return res;
-}
-
-fs::path normalize_path(const fs::path& path) {
-    std::string clean_str = path.string();
-    clean_str.erase(std::remove(clean_str.begin(), clean_str.end(), '"'), clean_str.end());
-    clean_str.erase(std::remove(clean_str.begin(), clean_str.end(), '\''), clean_str.end());
-
-    fs::path cleaned_path(clean_str);
-
-    return fs::absolute(cleaned_path).lexically_normal();
-}
-std::string to_forward_slashes(std::string path) {
-    std::replace(path.begin(), path.end(), '\\', '/');
-    return path;
-}
+}  // namespace Saura
 
 #endif

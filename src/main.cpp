@@ -3,12 +3,15 @@
 #include <vendor/imgui/backends/imgui_impl_sdlrenderer3.h>
 #include <vendor/imgui/imgui.h>
 
+#include "SDL3/SDL_timer.h"
 #include "ui/vault_manager.hpp"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
 int main() {
+  std::locale::global(std::locale("en_US.UTF-8"));
+
   // Setup SDL
   // [If using SDL_MAIN_USE_CALLBACKS: all code below until the main loop starts
   // would likely be your SDL_AppInit() function]
@@ -28,7 +31,7 @@ int main() {
     return -1;
   }
   SDL_Renderer *renderer = SDL_CreateRenderer(window, nullptr);
-  SDL_SetRenderVSync(renderer, 1);
+  SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
   if (renderer == nullptr) {
     SDL_Log("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
     return -1;
@@ -50,6 +53,10 @@ int main() {
   ImGui::StyleColorsDark();
   // ImGui::StyleColorsLight();
 
+  ImGui::GetIO().Fonts->AddFontFromFileTTF(
+      "res/fonts/JetBrainsMonoNerdFontMono-Regular.ttf", 20.0f, NULL,
+      ImGui::GetIO().Fonts->GetGlyphRangesCyrillic());
+
   // Setup Platform/Renderer backends
   ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer3_Init(renderer);
@@ -67,7 +74,20 @@ int main() {
 
   vault_manager->init();
 
+  const double fps_max = 60.0;
+  const double period_max = 1.0 / fps_max;
+  const double perf_frequency = (double)SDL_GetPerformanceFrequency();
+
+  double time = 0.0;
+  double begin_counter = 0.0;
+  double end_counter = 0.0;
+
   while (!done) {
+    begin_counter = (double)SDL_GetPerformanceCounter();
+    double counter_elapsed = (double)(begin_counter - end_counter);
+    double dt = (double)(counter_elapsed / perf_frequency);
+    double fps = (double)(perf_frequency / counter_elapsed);
+
     int window_width, window_height = 0;
 
     SDL_Event event;
@@ -78,36 +98,46 @@ int main() {
           event.window.windowID == SDL_GetWindowID(window))
         done = true;
     }
+    if (dt >= period_max) {
+      // Ограничиваем dt, чтобы избежать скачков
+      if (dt >= 1.0) {
+        dt = period_max;
+      }
 
-    if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
-      SDL_Delay(10);
-      continue;
+      if (SDL_GetWindowFlags(window) & SDL_WINDOW_MINIMIZED) {
+        SDL_Delay(10);
+        continue;
+      }
+
+      SDL_GetWindowSize(window, &window_width, &window_height);
+
+      ImGui_ImplSDLRenderer3_NewFrame();
+      ImGui_ImplSDL3_NewFrame();
+      ImGui::NewFrame();
+
+      ImGui::SetNextWindowPos({0, 0});
+      ImGui::SetNextWindowSize({(float)window_width, (float)window_height});
+      if (ImGui::Begin(
+              "Note Editor", nullptr,
+              ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
+                  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
+        vault_manager->draw();
+        ImGui::End();
+      }
+
+      // Rendering
+      ImGui::Render();
+      SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x,
+                         io.DisplayFramebufferScale.y);
+      SDL_SetRenderDrawColorFloat(renderer, clear_color.x, clear_color.y,
+                                  clear_color.z, clear_color.w);
+      SDL_RenderClear(renderer);
+      ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
+      SDL_RenderPresent(renderer);
+
+      double sleep_time_ms = period_max;
+      SDL_Delay((Uint32)sleep_time_ms * 1000);
     }
-
-    SDL_GetWindowSize(window, &window_width, &window_height);
-
-    ImGui_ImplSDLRenderer3_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
-
-    ImGui::SetNextWindowPos({0, 0});
-    ImGui::SetNextWindowSize({(float)window_width, (float)window_height});
-    if (ImGui::Begin("Note Editor", nullptr,
-                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
-                         ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
-      vault_manager->draw();
-      ImGui::End();
-    }
-
-    // Rendering
-    ImGui::Render();
-    SDL_SetRenderScale(renderer, io.DisplayFramebufferScale.x,
-                       io.DisplayFramebufferScale.y);
-    SDL_SetRenderDrawColorFloat(renderer, clear_color.x, clear_color.y,
-                                clear_color.z, clear_color.w);
-    SDL_RenderClear(renderer);
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-    SDL_RenderPresent(renderer);
   }
 
   // Cleanup

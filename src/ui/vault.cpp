@@ -5,53 +5,47 @@ Vault::Vault() {
   root = std::make_shared<Node>();
   root->is_dir = true;
   root->open = true;
-  refresh();
 }
 
-void Vault::refresh() {
-  if (root->is_dir) {
-    refresh_node(root);
+void Vault::build_directory_tree(const fs::path& rootPath,
+                                 DirectoryNode& rootNode) {
+  try {
+    for (const auto& entry : fs::directory_iterator(rootPath)) {
+      const auto& path = entry.path();
+      std::string pathStr = path.filename().string();
+
+      if (fs::is_directory(entry)) {
+        DirectoryNode childNode;
+        build_directory_tree(path, childNode);
+        rootNode.Children[pathStr] = childNode;
+      } else if (fs::is_regular_file(entry)) {
+        rootNode.Files.push_back(pathStr);
+      }
+    }
+  } catch (...) {
+    // Handle errors (if needed)
   }
 }
 
-void Vault::refresh_node(std::shared_ptr<Node> node) {
-  if (!node || !node->is_dir) return;
+void Vault::draw_node(const DirectoryNode& node) {
+  // Папки (уже отсортированы благодаря std::map)
+  for (const auto& [name, childNode] : node.Children) {
+    if (ImGui::TreeNode(name.c_str())) {
+      draw_node(childNode);
+      ImGui::TreePop();
+    }
+  }
 
-  // node->children.clear();
-
-  // try {
-  //   for (const auto& entry : fs::directory_iterator(node->path)) {
-  //     auto child = std::make_shared<Node>();
-  //     child->path = entry.path();
-  //     child->is_dir = fs::is_directory(entry);
-  //     child->open = false;
-  //     node->children.push_back(child);
-  //   }
-  // } catch (...) {
-  // }
+  // Файлы
+  for (const auto& file : node.Files) {
+    ImGui::BulletText("%s", file.c_str());
+  }
 }
 
-void Vault::draw_node(std::shared_ptr<Node> node) {
-  if (!node) return;
-
-  ImGuiTreeNodeFlags flags = (node->is_dir ? ImGuiTreeNodeFlags_OpenOnArrow
-                                           : ImGuiTreeNodeFlags_Leaf) |
-                             ImGuiTreeNodeFlags_SpanFullWidth;
-
-  // ImGui::TreeNodeEx("Vault", flags);
-
-  // if (node->is_dir && !node->open) {
-  //   refresh_node(node);
-  //   node->open = true;
-  // }
-
-  // for (auto &child : node->children) {
-  //   draw_node(child);
-  // }
-
-  // ImGui::TreePop();
+void Vault::draw() {
+  DirectoryNode rootNode;
+  build_directory_tree(root->path, rootNode);
+  draw_node(rootNode);
 }
-
-void Vault::draw() { draw_node(root); }
 
 }  // namespace Saura

@@ -11,24 +11,27 @@ namespace Saura {
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
+struct Node {
+  fs::path path;
+  bool is_dir;
+  bool open;
+  std::map<fs::path, std::shared_ptr<Node>> children;
+};
+
+struct DirectoryNode {
+  std::map<std::string, DirectoryNode> Children;
+  std::vector<std::string> Files;
+};
+
 class Vault {
  public:
-  struct Node {
-    fs::path path;
-    bool is_dir;
-    bool open;
-    std::vector<std::shared_ptr<Node>> children;
-  };
-
-  fs::path path;
   std::shared_ptr<Node> root;
 
   Vault();
 
  private:
-  void refresh();
-  void refresh_node(std::shared_ptr<Node> node);
-  void draw_node(std::shared_ptr<Node> node);
+  void draw_node(const DirectoryNode& node);
+  void build_directory_tree(const fs::path& rootPath, DirectoryNode& rootNode);
 
  public:
   void draw();
