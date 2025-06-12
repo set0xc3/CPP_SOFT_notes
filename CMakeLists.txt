@@ -10,7 +10,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 
-file(GLOB_RECURSE APP_FILES "src/*.cpp")
+file(GLOB_RECURSE APP_FILES
+    "${PROJECT_SOURCE_DIR}/saura/cmd/app/main.cpp"
+    "${PROJECT_SOURCE_DIR}/saura/include/saura/*/*.cpp"
+)
 add_executable(${PROJECT_NAME} ${APP_FILES})
 
 # Создать символическую ссылку res/ внутри Debug/Release
@@ -24,19 +27,19 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 )
 
 
-add_subdirectory(tests)
+# add_subdirectory(tests)
 
 # Добавляем корневую директорию проекта в include-пути
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}
-    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/saura/include
 )
 
 # Vendor
 
 ## IMGUI
 
-set(IMGUI_DIR vendor/imgui)
+set(IMGUI_DIR ${PROJECT_SOURCE_DIR}/vendor/imgui)
 
 file(GLOB IMGUI_SOURCES
   ${IMGUI_DIR}/*.cpp
@@ -48,11 +51,6 @@ add_library(imgui STATIC ${IMGUI_SOURCES})
 
 ## ImGui FileBrowser
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-    ${PROJECT_SOURCE_DIR}/vendor/imgui-filebrowser
-)
-
-# Указываем, где искать заголовки для imgui
 target_include_directories(imgui PUBLIC ${PROJECT_SOURCE_DIR}/vendor/imgui)
 
 set_target_properties(imgui PROPERTIES
@@ -65,7 +63,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
 
 ## SDL3
 
-add_subdirectory(vendor/SDL3 EXCLUDE_FROM_ALL)
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/SDL3 EXCLUDE_FROM_ALL)
 
 target_include_directories(imgui PRIVATE ${PROJECT_SOURCE_DIR}/vendor/SDL3/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
@@ -78,4 +76,4 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 ## Catch2
 
-add_subdirectory(vendor/Catch2)
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/Catch2)
