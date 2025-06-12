@@ -1,18 +1,12 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
-#include <codecvt>
-#include <cstdlib>
 #include <filesystem>
-#include <iostream>
-#include <map>
-#include <stdexcept>
 #include <string>
 
 namespace Saura {
 
 namespace fs = std::filesystem;
-fs::path home_config_path();
 
 fs::path normalize_path(const fs::path& path);
 

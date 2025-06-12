@@ -1,10 +1,11 @@
+#include <locale>
+
 #include <vendor/SDL3/include/SDL3/SDL.h>
 #include <vendor/imgui/backends/imgui_impl_sdl3.h>
 #include <vendor/imgui/backends/imgui_impl_sdlrenderer3.h>
 #include <vendor/imgui/imgui.h>
 
 #include "SDL3/SDL_timer.h"
-#include "ui/vault_manager.hpp"
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
@@ -45,9 +46,9 @@ int main() {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
   io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
   io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
+      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
@@ -69,11 +70,6 @@ int main() {
   // Main loop
   bool done = false;
 
-  std::unique_ptr<saura::VaultManager> vault_manager =
-      std::make_unique<saura::VaultManager>();
-
-  vault_manager->init();
-
   const double fps_max = 60.0;
   const double period_max = 1.0 / fps_max;
   const double perf_frequency = (double)SDL_GetPerformanceFrequency();
@@ -93,7 +89,8 @@ int main() {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
       ImGui_ImplSDL3_ProcessEvent(&event);
-      if (event.type == SDL_EVENT_QUIT) done = true;
+      if (event.type == SDL_EVENT_QUIT)
+        done = true;
       if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
           event.window.windowID == SDL_GetWindowID(window))
         done = true;
@@ -121,7 +118,72 @@ int main() {
               "Note Editor", nullptr,
               ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
                   ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize)) {
-        vault_manager->draw();
+        {
+          ImVec2 available = ImGui::GetContentRegionAvail();
+
+          {
+            if (ImGui::IsKeyDown(ImGuiKey_F1)) {
+              ImGui::OpenPopup("Show All Commands");
+            }
+
+            if (ImGui::BeginPopup("Show All Commands",
+                                  ImGuiWindowFlags_AlwaysAutoResize)) {
+              if (ImGui::IsKeyDown(ImGuiKey_Escape)) {
+                ImGui::CloseCurrentPopup();
+              }
+              ImGui::Text("[Ctrl] + [O]               Navigate To File");
+              ImGui::Text("[Ctrl] + [Shift] + [O]     Navigate To Workspace");
+              ImGui::Text("[Ctrl] + [F]               Search In Open File");
+              ImGui::EndPopup();
+            }
+
+            // Аналогично для второго popup’а:
+            if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) &&
+                ImGui::IsKeyDown(ImGuiKey_LeftShift) &&
+                ImGui::IsKeyDown(ImGuiKey_O)) {
+              ImGui::OpenPopup("Navigate To Workspace");
+            }
+
+            // Установка позиции popup по позиции мыши
+            ImVec2 popup_pos = ImGui::GetMousePos();
+            ImGui::SetNextWindowPos(popup_pos, ImGuiCond_Appearing);
+
+            if (ImGui::BeginPopup("Navigate To Workspace",
+                                  ImGuiWindowFlags_AlwaysAutoResize)) {
+              if (ImGui::IsKeyDown(ImGuiKey_Escape)) {
+                ImGui::CloseCurrentPopup();
+              }
+              ImGui::BeginGroup();
+              static char input_path[1024];
+              ImGui::InputText("##Input", input_path, sizeof(input_path));
+              ImGui::Spacing();
+              if (ImGui::TreeNodeEx("Vault", ImGuiTreeNodeFlags_Bullet)) {
+                ImGui::TreePop();
+              }
+              if (ImGui::TreeNodeEx("PARA Template",
+                                    ImGuiTreeNodeFlags_Bullet)) {
+                ImGui::TreePop();
+              }
+
+              ImGui::EndGroup();
+              ImGui::EndPopup();
+            }
+          }
+
+          ImGui::BeginChild("##Empty", {0.0f, 0.0f}, ImGuiChildFlags_Border);
+
+          static ImVec2 group_size;
+          ImGui::SetCursorPos(
+              {ImGui::GetCursorPos().x + (available.x - group_size.x) * 0.5f,
+               ImGui::GetCursorPos().y + (available.y - group_size.y) * 0.5f});
+          ImGui::BeginGroup();
+          ImGui::Text("- empty -");
+          ImGui::EndGroup();
+          group_size = ImGui::GetItemRectSize();
+
+          ImGui::EndChild();
+        }
+
         ImGui::End();
       }
 
