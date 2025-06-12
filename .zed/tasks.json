@@ -1,6 +1,16 @@
 [
   {
-    "label": "[build] app",
+    "label": "(linux) [build] app",
+    "command": "cmake -B build -G Ninja && cmake --build build --config Debug",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "(win) [build] app",
     "command": "cmake -B build -G Ninja; cmake --build build --config Debug",
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
@@ -10,7 +20,17 @@
     "shell": "system"
   },
   {
-    "label": "[build:run] app",
+    "label": "(linux) [build:run] app",
+    "command": "cmake -B build -G Ninja && cmake --build build --config Debug && ./build/Debug/app.exe",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "(win) [build:run] app",
     "command": "cmake -B build -G Ninja; cmake --build build --config Debug; ./build/Debug/app.exe",
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
@@ -30,7 +50,27 @@
     "shell": "system"
   },
   {
-    "label": "[build] tests",
+    "label": "(linux) [build] tests",
+    "command": "cmake -B build -G Ninja && cmake --build build --config Debug",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "(linux) [build:run] tests",
+    "command": "cmake -B build -G Ninja && cmake --build build --config Debug && ./build/Debug/tests.exe",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "reveal_target": "dock",
+    "hide": "never",
+    "shell": "system"
+  },
+  {
+    "label": "(win) [build] tests",
     "command": "cmake -B build -G Ninja; cmake --build build --config Debug",
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
@@ -40,7 +80,7 @@
     "shell": "system"
   },
   {
-    "label": "[build:run] tests",
+    "label": "(win) [build:run] tests",
     "command": "cmake -B build -G Ninja; cmake --build build --config Debug; ./build/Debug/tests.exe",
     "use_new_terminal": false,
     "allow_concurrent_runs": false,

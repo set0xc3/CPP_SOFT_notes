@@ -16,7 +16,7 @@
 
 #include <utils.hpp>
 
-namespace Saura {
+namespace saura {
 void VaultManager::init() {
   json config = read_config();
   for (auto& vault : config["vaults"].items()) {
@@ -43,8 +43,8 @@ void VaultManager::open() {}
 
 json VaultManager::read_config() {
   json ret;
-  fs::path appdata_path = get_appdata_path();
-  fs::path app_path = appdata_path / "SauraStudios" / "Notes";
+  fs::path config_path = Saura::home_config_path();
+  fs::path app_path = config_path / "SauraStudios" / "Notes";
   fs::path app_config = app_path / "config.json";
 
   if (fs::exists(app_path) && fs::is_directory(app_path)) {
@@ -62,8 +62,8 @@ json VaultManager::read_config() {
 }
 
 bool VaultManager::save_config(const json& new_config) {
-  fs::path appdata_path = get_appdata_path();
-  fs::path app_path = appdata_path / "SauraStudios" / "Notes";
+  fs::path config_path = Saura::home_config_path();
+  fs::path app_path = config_path / "SauraStudios" / "Notes";
   fs::path app_config = app_path / "config.json";
 
   std::ofstream file(app_config);
@@ -100,7 +100,7 @@ void VaultManager::draw_vault_manager() {
 
       json new_config = read_config();
       // std::cout << vault->path << std::endl;
-      if (!new_config["vaults"].contains(normalize_path(new_vault->root->path))) {
+      if (!new_config["vaults"].contains(Saura::normalize_path(new_vault->root->path))) {
         std::cout << new_config << std::endl;
         new_config["vaults"][new_vault->root->path.string()] = {
             {"ts", ""},
@@ -143,4 +143,4 @@ void VaultManager::draw_vault() {
     ImGui::EndChild();
   }
 }
-}  // namespace Saura
+}  // namespace saura

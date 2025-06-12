@@ -5,13 +5,25 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Установка выходных директорий для исполняемых файлов
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/$<CONFIG>")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/$<CONFIG>")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/$<CONFIG>")
+set(OUTPUT_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 
 file(GLOB_RECURSE APP_FILES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${APP_FILES})
+
+# Создать символическую ссылку res/ внутри Debug/Release
+set(SRC_RES_DIR ${CMAKE_SOURCE_DIR}/res)
+set(RES_SYMLINK ${OUTPUT_DIR}/res)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove -f ${RES_SYMLINK}
+    COMMAND ${CMAKE_COMMAND} -E create_symlink ${SRC_RES_DIR} ${RES_SYMLINK}
+    COMMENT "Создание символической ссылки ${RES_SYMLINK} -> ${SRC_RES_DIR}"
+)
+
+
 add_subdirectory(tests)
 
 # Добавляем корневую директорию проекта в include-пути

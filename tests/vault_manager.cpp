@@ -8,40 +8,38 @@
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-TEST_CASE("get appdata and create app folder") {
-  fs::path appdata_path = Saura::get_appdata_path();
-  fs::path app_path = appdata_path / "SauraStudios" / "Notes";
+TEST_CASE("config_path") {
+  fs::path config_path = Saura::normalize_path(Saura::home_config_path());
+  fs::path app_path = config_path / "SauraStudios" / "Notes";
   fs::path app_config = app_path / "config.json";
-  fs::path test_config = "C:\\vault\\docs\\test";
-
-  test_config = Saura::normalize_path(test_config);
-  std::cout << test_config << std::endl;
-
   std::cout << app_path << std::endl;
+  std::cout << app_config << std::endl;
 
-  if (fs::exists(app_path) && fs::is_directory(app_path)) {
-    std::cout << "Folder exists." << std::endl;
+  // 1) Create
+  fs::create_directories(app_path);
 
-    if (!fs::is_directory(app_config)) {
-      std::ofstream file(app_config);
-
-      // Write to file
-      if (file.is_open()) {
-        json config;
-        config["vaults"][test_config.string()] = {
-            {"ts", "1749298616267"},
-            {"open", false},
-        };
-        file << config.dump() << std::endl;
-
-        file.close();
-        std::cout << "File created successfully!" << std::endl;
-      } else {
-        std::cerr << "Error creating file." << std::endl;
-      }
-    }
-  } else {
-    std::cout << "Folder does not exist." << std::endl;
-    fs::create_directories(app_path);
+  // 2.1) Check
+  if (!fs::exists(app_path)) {
+    throw std::runtime_error("Failed create dir");
   }
+  // 2.2) Check2
+  if (!fs::is_directory(app_path)) {
+    throw std::runtime_error("Is not dir!");
+  }
+
+  // 3) Open
+  std::ofstream file(app_config);
+  if (!file.is_open()) {
+    throw std::runtime_error("Failed open file!");
+  }
+
+  // 3.1) Write
+  json config;
+  config["vaults"][config_path.string()] = {
+      {"ts", "1749298616267"},
+      {"open", false},
+  };
+  file << config.dump() << std::endl;
+  file.close();
+  std::cout << "File created successfully!" << std::endl;
 }

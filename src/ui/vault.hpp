@@ -7,7 +7,7 @@
 #include <vector>
 #include <vendor/json/include/nlohmann/json.hpp>
 
-namespace Saura {
+namespace saura {
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
@@ -36,6 +36,6 @@ class Vault {
  public:
   void draw();
 };
-}  // namespace Saura
+}  // namespace saura
 
 #endif

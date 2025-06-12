@@ -6,7 +6,7 @@
 
 #include "vault.hpp"
 
-namespace Saura {
+namespace saura {
 
 using json = nlohmann::json;
 
@@ -28,6 +28,6 @@ class VaultManager {
   std::map<fs::path, std::shared_ptr<Vault>> vaults;
   std::weak_ptr<Vault> hot_vault;
 };
-}  // namespace Saura
+}  // namespace saura
 
 #endif

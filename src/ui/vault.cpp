@@ -1,6 +1,6 @@
 #include "vault.hpp"
 
-namespace Saura {
+namespace saura {
 Vault::Vault() {
   root = std::make_shared<Node>();
   root->is_dir = true;
@@ -48,4 +48,4 @@ void Vault::draw() {
   draw_node(rootNode);
 }
 
-}  // namespace Saura
+}  // namespace saura

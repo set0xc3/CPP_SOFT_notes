@@ -12,7 +12,7 @@
 namespace Saura {
 
 namespace fs = std::filesystem;
-fs::path get_appdata_path();
+fs::path home_config_path();
 
 fs::path normalize_path(const fs::path& path);
 

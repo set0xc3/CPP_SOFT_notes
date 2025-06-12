@@ -69,8 +69,8 @@ int main() {
   // Main loop
   bool done = false;
 
-  std::unique_ptr<Saura::VaultManager> vault_manager =
-      std::make_unique<Saura::VaultManager>();
+  std::unique_ptr<saura::VaultManager> vault_manager =
+      std::make_unique<saura::VaultManager>();
 
   vault_manager->init();
 

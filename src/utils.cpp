@@ -1,39 +1,31 @@
 #include "utils.hpp"
 
+#include <algorithm>
+
 namespace Saura {
-fs::path get_appdata_path() {
-  fs::path res;
-  const char* appdata = nullptr;
+std::filesystem::path home_config_path() {
+  std::filesystem::path res;
 
-// Для MSVC и Clang-cl (режим MSVC)
-#if defined(_MSC_VER) || (defined(__clang__) && defined(_MSC_VER))
-  char* buffer = nullptr;
-  size_t len = 0;
-  errno_t err = _dupenv_s(&buffer, &len, "APPDATA");
-  if (err || buffer == nullptr) {
-    if (buffer) free(buffer);
+  // Windows
+#if defined(_WIN32)
+  auto config = std::getenv("APPDATA");
+  if (config == nullptr) {
     throw std::runtime_error("APPDATA environment variable not found");
   }
-  appdata = buffer;
-#else
-  // Для MinGW и других компиляторов
-  appdata = std::getenv("APPDATA");
-  if (!appdata) {
-    throw std::runtime_error("APPDATA environment variable not found");
+  res = std::filesystem::path(config);
+// Linux
+#elif defined(__linux__)
+  auto config = std::getenv("HOME");
+  if (config == nullptr) {
+    throw std::runtime_error("HOME environment variable not found");
   }
-#endif
-
-  res = fs::path(appdata);
-
-// Освобождаем буфер для MSVC/Clang-cl
-#if defined(_MSC_VER) || (defined(__clang__) && defined(_MSC_VER))
-  free(buffer);
+  res = std::filesystem::path(config) / ".config";
 #endif
 
   return res;
 }
 
-fs::path normalize_path(const fs::path& path) {
+fs::path normalize_path(const fs::path &path) {
   std::string clean_str = path.string();
   clean_str.erase(std::remove(clean_str.begin(), clean_str.end(), '"'),
                   clean_str.end());
@@ -50,8 +42,8 @@ std::string to_forward_slashes(std::string path) {
   return path;
 }
 
-bool is_directory_modified(const fs::path& dir_path,
-                           fs::file_time_type& last_known_time) {
+bool is_directory_modified(const fs::path &dir_path,
+                           fs::file_time_type &last_known_time) {
   auto current_time = fs::last_write_time(dir_path);
   if (current_time != last_known_time) {
     last_known_time = current_time;
@@ -60,7 +52,7 @@ bool is_directory_modified(const fs::path& dir_path,
   return false;
 }
 
-bool natural_compare(const std::string& a, const std::string& b) {
+bool natural_compare(const std::string &a, const std::string &b) {
   size_t ia = 0, ib = 0;
   while (ia < a.size() && ib < b.size()) {
     if (std::isdigit(static_cast<unsigned char>(a[ia])) &&
@@ -96,4 +88,4 @@ bool natural_compare(const std::string& a, const std::string& b) {
   }
   return a.size() < b.size();
 }
-}  // namespace Saura
+} // namespace Saura
