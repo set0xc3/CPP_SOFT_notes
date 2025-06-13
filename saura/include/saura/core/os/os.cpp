@@ -13,6 +13,7 @@
 namespace Saura {
 OS::OS() {
   window_ctx = std::make_unique<Window_Context>();
+  window_ctx->title = "(Saura Studios) [Dev] Notes";
   window_ctx->w = 1280 / 2;
   window_ctx->h = 720 / 2;
 }
@@ -27,7 +28,7 @@ void OS::init() {
   SDL_WindowFlags window_flags =
       SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
   window_ctx->handle =
-      SDL_CreateWindow("Dear ImGui SDL3+SDL_Renderer example", window_ctx->w,
+      SDL_CreateWindow(window_ctx->title.c_str(), window_ctx->w,
                        window_ctx->h, window_flags);
   if (window_ctx->handle == nullptr) {
     throw std::runtime_error("Failed SDL_CreateWindow!");
@@ -102,7 +103,7 @@ void OS::draw_begin() {
 }
 
 void OS::draw_end() {
-  ImVec4 clear_color = {1.0f, 1.0f, 1.0f, 1.0f};
+  ImVec4 clear_color = {0.0f, 0.0f, 0.0f, 0.0f};
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
   ImGui::Render();

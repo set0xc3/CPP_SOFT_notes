@@ -11,15 +11,16 @@ namespace fs = std::filesystem;
 namespace Saura {
 struct Window_Context {
   int w, h;
+  std::string title;
   SDL_Window *handle;
   SDL_Renderer *renderer;
 };
 
 class OS {
-private:
+ private:
   std::unique_ptr<Window_Context> window_ctx;
 
-public:
+ public:
   OS();
 
   void init();
@@ -38,6 +39,6 @@ public:
 };
 
 fs::path home_config_path();
-} // namespace Saura
+}  // namespace Saura
 
 #endif
