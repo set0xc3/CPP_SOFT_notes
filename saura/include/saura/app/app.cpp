@@ -40,7 +40,8 @@ void App::update() {
 
       os_ctx->update();
       os_ctx->draw_begin();
-      ui_ctx->set_root_size({(float)os_ctx->get_window_width(), (float)os_ctx->get_window_height()});
+      ui_ctx->set_root_size({(float)os_ctx->get_window_width(),
+                             (float)os_ctx->get_window_height()});
       ui_ctx->update();
       os_ctx->draw_end();
     }
@@ -90,4 +91,4 @@ bool save_config(const json &new_config) {
 
   return true;
 }
-} // namespace Saura
+}  // namespace Saura

@@ -5,16 +5,31 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(OUTPUT_DIR ${CMAKE_BINARY_DIR}/$<CONFIG>)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+# Настройка выходных каталогов
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release")
 
-file(GLOB_RECURSE APP_FILES
-    "${PROJECT_SOURCE_DIR}/saura/cmd/app/main.cpp"
-    "${PROJECT_SOURCE_DIR}/saura/include/saura/*/*.cpp"
+set(OUTPUT_DIR "${CMAKE_BINARY_DIR}/$<CONFIG>")
+
+set(LIB_SOURCES
+    "${PROJECT_SOURCE_DIR}/saura/include/saura/app/app.cpp"
+    "${PROJECT_SOURCE_DIR}/saura/include/saura/core/os/os.cpp"
+    "${PROJECT_SOURCE_DIR}/saura/include/saura/core/utils/utils.cpp"
+    "${PROJECT_SOURCE_DIR}/saura/include/saura/ui/ui.cpp"
 )
-add_executable(${PROJECT_NAME} ${APP_FILES})
+set(APP_SOURCES
+    "${PROJECT_SOURCE_DIR}/saura/cmd/app/main.cpp"
+)
+
+# Создаем библиотеку
+add_library(${PROJECT_NAME}_lib STATIC ${LIB_SOURCES})
+
+# Создаем исполняемый файл
+add_executable(${PROJECT_NAME} ${APP_SOURCES})
 
 # Пути
 set(SRC_RES_DIR "${CMAKE_SOURCE_DIR}/res")
@@ -28,6 +43,7 @@ endif()
 
 # Создание ссылки — кросс-платформенно
 if(WIN32)
+    # Исправление для путей с пробелами и кириллицей
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND cmd /c "if exist \"${RES_SYMLINK}\" rmdir \"${RES_SYMLINK}\""
         COMMAND cmd /c "mklink /J \"${RES_SYMLINK}\" \"${SRC_RES_DIR}\""
@@ -42,53 +58,58 @@ else()
 endif()
 
 
-# add_subdirectory(tests)
+# Добавляем include-пути
+target_include_directories(${PROJECT_NAME}_lib PUBLIC
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/saura/include
+    ${PROJECT_SOURCE_DIR}/vendor/imgui
+    ${PROJECT_SOURCE_DIR}/vendor/json/include
+    ${PROJECT_SOURCE_DIR}/vendor/SDL3/include
+)
 
-# Добавляем корневую директорию проекта в include-пути
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${PROJECT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/saura/include
 )
 
-# Vendor
-
+# Vendor libraries
 ## IMGUI
-
 set(IMGUI_DIR ${PROJECT_SOURCE_DIR}/vendor/imgui)
 
 file(GLOB IMGUI_SOURCES
-  ${IMGUI_DIR}/*.cpp
-  ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
-  ${IMGUI_DIR}/backends/imgui_impl_sdlrenderer3.cpp
+    ${IMGUI_DIR}/*.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_sdlrenderer3.cpp
 )
 
 add_library(imgui STATIC ${IMGUI_SOURCES})
-
-## ImGui FileBrowser
-
-target_include_directories(imgui PUBLIC ${PROJECT_SOURCE_DIR}/vendor/imgui)
-
-set_target_properties(imgui PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/vendor/imgui/$<CONFIG>"
-  LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/vendor/imgui/$<CONFIG>"
-  RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/vendor/imgui/$<CONFIG>"
+target_include_directories(imgui PUBLIC
+    ${IMGUI_DIR}
+    ${PROJECT_SOURCE_DIR}/vendor/SDL3/include
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE imgui)
-
 ## SDL3
-
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/SDL3 EXCLUDE_FROM_ALL)
 
-target_include_directories(imgui PRIVATE ${PROJECT_SOURCE_DIR}/vendor/SDL3/include)
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL3::SDL3)
-
 ## JSON
-
-target_include_directories(${PROJECT_NAME} PRIVATE
+add_library(json INTERFACE)
+target_include_directories(json INTERFACE
     ${PROJECT_SOURCE_DIR}/vendor/json/include
 )
 
 ## Catch2
-
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendor/Catch2)
+
+# Связываем зависимости
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    ${PROJECT_NAME}_lib
+    imgui
+    SDL3::SDL3
+    json
+)
+
+target_link_libraries(${PROJECT_NAME}_lib PUBLIC
+    imgui
+    SDL3::SDL3
+    json
+)
