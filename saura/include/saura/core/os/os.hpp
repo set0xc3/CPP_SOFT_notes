@@ -36,9 +36,10 @@ class OS {
 
   double get_performance_frequency();
   double get_performance_counter();
-};
 
-fs::path home_config_path();
+  std::string get_safe_getenv(const std::string &key);
+  fs::path get_home_config_path();
+};
 }  // namespace Saura
 
 #endif

@@ -1,14 +1,15 @@
 #include "os.hpp"
-#include "SDL3/SDL_video.h"
-
-#include <filesystem>
-#include <locale>
-#include <string>
 
 #include <vendor/SDL3/include/SDL3/SDL.h>
 #include <vendor/imgui/backends/imgui_impl_sdl3.h>
 #include <vendor/imgui/backends/imgui_impl_sdlrenderer3.h>
 #include <vendor/imgui/imgui.h>
+
+#include <filesystem>
+#include <locale>
+#include <string>
+
+#include "SDL3/SDL_video.h"
 
 namespace Saura {
 OS::OS() {
@@ -27,9 +28,8 @@ void OS::init() {
 
   SDL_WindowFlags window_flags =
       SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-  window_ctx->handle =
-      SDL_CreateWindow(window_ctx->title.c_str(), window_ctx->w,
-                       window_ctx->h, window_flags);
+  window_ctx->handle = SDL_CreateWindow(
+      window_ctx->title.c_str(), window_ctx->w, window_ctx->h, window_flags);
   if (window_ctx->handle == nullptr) {
     throw std::runtime_error("Failed SDL_CreateWindow!");
   }
@@ -49,9 +49,9 @@ void OS::init() {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
   io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
+      ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
   io.ConfigFlags |=
-      ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad Controls
+      ImGuiConfigFlags_NavEnableGamepad;  // Enable Gamepad Controls
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
@@ -80,18 +80,25 @@ void OS::deinit() {
 }
 
 void OS::update() {
-    SDL_GetWindowSize(window_ctx->handle, &window_ctx->w, &window_ctx->h);
+  SDL_GetWindowSize(window_ctx->handle, &window_ctx->w, &window_ctx->h);
 }
 
 bool OS::update_events() {
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     ImGui_ImplSDL3_ProcessEvent(&event);
-    if (event.type == SDL_EVENT_QUIT)
-      return false;
-    if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
-        event.window.windowID == SDL_GetWindowID(window_ctx->handle))
-      return false;
+
+    switch (event.type) {
+      case SDL_EVENT_QUIT: {
+        return false;
+      }
+      case SDL_EVENT_WINDOW_CLOSE_REQUESTED: {
+        if (event.window.windowID == SDL_GetWindowID(window_ctx->handle)) {
+          return false;
+        }
+        break;
+      }
+    }
   }
   return true;
 }
@@ -131,25 +138,31 @@ double OS::get_performance_counter() {
   return (double)SDL_GetPerformanceCounter();
 }
 
-fs::path home_config_path() {
-  fs::path res;
+std::string OS::get_safe_getenv(const std::string &key) {
+  return SDL_getenv(key.c_str());
+}
 
-  // Windows
+fs::path OS::get_home_config_path() {
+  fs::path res = {};
+
 #if defined(_WIN32)
-  auto config = std::getenv("APPDATA");
-  if (config == nullptr) {
+  auto config = get_safe_getenv("APPDATA");
+
+  if (config.empty()) {
     throw std::runtime_error("APPDATA environment variable not found");
   }
+
   res = fs::path(config);
-// Linux
 #elif defined(__linux__)
-  auto config = std::getenv("HOME");
-  if (config == nullptr) {
+  auto config = get_safe_getenv("HOME");
+
+  if (config.empty()) {
     throw std::runtime_error("HOME environment variable not found");
   }
+
   res = fs::path(config) / ".config";
 #endif
 
   return res;
 }
-} // namespace Saura
+}  // namespace Saura

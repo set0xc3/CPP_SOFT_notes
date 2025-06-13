@@ -56,7 +56,7 @@ void App::update() {
 
 json App::read_config() {
   json ret;
-  fs::path config_path = home_config_path();
+  fs::path config_path = os_ctx->get_home_config_path();
   fs::path app_path = config_path / "SauraStudios" / "Notes";
   fs::path app_config = app_path / "config.json";
 
@@ -74,8 +74,8 @@ json App::read_config() {
   return ret;
 }
 
-bool save_config(const json &new_config) {
-  fs::path config_path = home_config_path();
+bool App::save_config(const json &new_config) {
+  fs::path config_path = os_ctx->get_home_config_path();
   fs::path app_path = config_path / "SauraStudios" / "Notes";
   fs::path app_config = app_path / "config.json";
 
