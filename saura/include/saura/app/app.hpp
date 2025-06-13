@@ -2,12 +2,14 @@
 #define APP_HPP_
 
 #include <memory>
+
 #include <vendor/json/include/nlohmann/json.hpp>
 
 #include "saura/core/os/os.hpp"
 #include "saura/ui/ui.hpp"
 
 namespace Saura {
+
 using json = nlohmann::json;
 
 class App {
@@ -22,10 +24,6 @@ public:
   void init();
   void deinit();
   void update();
-
-private:
-  json read_config();
-  bool save_config(const json &new_config);
 };
 
 } // namespace Saura

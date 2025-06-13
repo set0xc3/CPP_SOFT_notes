@@ -10,7 +10,8 @@
  *      - Master Popup
  *      - View
  *  Master Popup (Commands):
- *      - [F1]               : Show All Commands
+ *      - Misc:
+ *          - [F1]           : Show All Commands
  *      - Workspace:
  *          - [Ctrl+Shift+O] : Show All Workspaces
  *          - [Ctrl+Shift+F] : Search In All Workspaces
@@ -26,6 +27,7 @@
 
 #include <functional>
 #include <list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -36,24 +38,55 @@ using Key_Code = ImGuiKey;
 enum Area { Empty, Master_Popup, View };
 
 struct Node {
-  std::list<Node> node;
+  std::list<std::shared_ptr<Node>> node;
   bool is_open;
-  std::string name;
+  bool is_dir;
+  std::string text;
   std::string data;
 };
 
+enum Command_Kind {
+  Command_Kind_None,
+  Command_Kind_ShowAllCommands,
+  Command_Kind_ShowAllWorkspaces,
+};
+
+struct Command {
+  Command_Kind kind;
+};
+
 class UI {
+  class Master_Popup {
+   private:
+    const UI *ui_ctx;
+
+    std::string title;
+
+   public:
+    Master_Popup(const UI *ui_ctx);
+
+    void draw();
+    void open();
+
+    bool is_open();
+  };
+
  private:
   ImVec2 root_size;
   Area curr_area;
-  std::vector<Node> nodes;
-  Node *curr_node;
+
+  std::shared_ptr<Master_Popup> master_popup;
+
+  std::vector<std::shared_ptr<Node>> nodes;
+  std::weak_ptr<Node> curr_node;
+
+  std::vector<Command> commands;
 
  public:
   UI();
 
   void update();
-  void update_keybinds();
+  void process_keybinds();
 
   void set_root_size(const ImVec2 new_size);
 };

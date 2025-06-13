@@ -10,11 +10,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 
-set(LIB_SOURCES
-    "${PROJECT_SOURCE_DIR}/saura/include/saura/app/app.cpp"
-    "${PROJECT_SOURCE_DIR}/saura/include/saura/core/os/os.cpp"
-    "${PROJECT_SOURCE_DIR}/saura/include/saura/core/utils/utils.cpp"
-    "${PROJECT_SOURCE_DIR}/saura/include/saura/ui/ui.cpp"
+file(GLOB_RECURSE LIB_SOURCES
+    "${PROJECT_SOURCE_DIR}/saura/include/saura/*/*.cpp"
 )
 set(APP_SOURCES
     "${PROJECT_SOURCE_DIR}/saura/cmd/app/main.cpp"
