@@ -16,15 +16,30 @@ file(GLOB_RECURSE APP_FILES
 )
 add_executable(${PROJECT_NAME} ${APP_FILES})
 
-# Создать символическую ссылку res/ внутри Debug/Release
-set(SRC_RES_DIR ${CMAKE_SOURCE_DIR}/res)
-set(RES_SYMLINK ${OUTPUT_DIR}/res)
+# Пути
+set(SRC_RES_DIR "${CMAKE_SOURCE_DIR}/res")
+set(RES_SYMLINK "${OUTPUT_DIR}/res")
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove -f ${RES_SYMLINK}
-    COMMAND ${CMAKE_COMMAND} -E create_symlink ${SRC_RES_DIR} ${RES_SYMLINK}
-    COMMENT "Создание символической ссылки ${RES_SYMLINK} -> ${SRC_RES_DIR}"
-)
+# Убедимся, что OUTPUT_DIR задан
+if(NOT OUTPUT_DIR)
+    set(OUTPUT_DIR "${CMAKE_BINARY_DIR}")
+    set(RES_SYMLINK "${CMAKE_BINARY_DIR}/res")
+endif()
+
+# Создание ссылки — кросс-платформенно
+if(WIN32)
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND cmd /c "if exist \"${RES_SYMLINK}\" rmdir \"${RES_SYMLINK}\""
+        COMMAND cmd /c "mklink /J \"${RES_SYMLINK}\" \"${SRC_RES_DIR}\""
+        COMMENT "Создание жёсткой ссылки (junction): ${RES_SYMLINK} -> ${SRC_RES_DIR}"
+    )
+else()
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E rm -rf "${RES_SYMLINK}"
+        COMMAND ${CMAKE_COMMAND} -E create_symlink "${SRC_RES_DIR}" "${RES_SYMLINK}"
+        COMMENT "Создание символической ссылки: ${RES_SYMLINK} -> ${SRC_RES_DIR}"
+    )
+endif()
 
 
 # add_subdirectory(tests)
