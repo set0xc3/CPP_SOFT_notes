@@ -1,13 +1,16 @@
 #include "ui.hpp"
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <string>
 
 #include "saura/config/config.hpp"
 
+namespace fs = std::filesystem;
+
 namespace Saura {
-UI::Master_Popup::Master_Popup(const UI* _ui_ctx) {
+UI::Master_Popup::Master_Popup(UI* _ui_ctx) {
   ui_ctx = _ui_ctx;
   title = "[popop:master]";
 }
@@ -23,15 +26,91 @@ void UI::Master_Popup::draw() {
   ImGui::SetNextWindowSize({size.x, 0.0f});
 
   if (ImGui::BeginPopup("[popop:master]")) {
-    for (auto& node : ui_ctx->nodes) {
+    for (auto& node : ui_ctx->workspaces) {
       if (!node->is_dir) {
         continue;
       }
 
-      auto title = node->text;
+      auto& title = node->text;
       if (ImGui::TreeNodeEx(
               title.c_str(),
               ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_SpanFullWidth)) {
+        if (ImGui::IsItemClicked()) {
+          std::cout << "Clicked" << std::endl;
+
+          if (!fs::exists(title)) {
+            if (fs::create_directories(title)) {
+              std::cout << "Yes" << std::endl;
+
+              std::vector<fs::directory_entry> dirs;
+              std::vector<fs::directory_entry> files;
+
+              for (const auto& entry : fs::directory_iterator(title)) {
+                if (entry.is_directory()) {
+                  dirs.push_back(entry);
+                } else {
+                  files.push_back(entry);
+                }
+              }
+
+              // Сортируем по имени
+              auto sort_by_name = [](const fs::directory_entry& a,
+                                     const fs::directory_entry& b) {
+                return a.path().filename().string() <
+                       b.path().filename().string();
+              };
+
+              std::sort(dirs.begin(), dirs.end(), sort_by_name);
+              std::sort(files.begin(), files.end(), sort_by_name);
+
+              for (const auto& dir : dirs) {
+                std::cout << "[DIR]  " << dir.path().filename().string()
+                          << '\n';
+              }
+              for (const auto& file : files) {
+                std::cout << "[FILE] " << file.path().filename().string()
+                          << '\n';
+              }
+            }
+          } else {
+            std::vector<fs::directory_entry> dirs;
+            std::vector<fs::directory_entry> files;
+
+            for (const auto& entry : fs::directory_iterator(title)) {
+              if (entry.is_directory()) {
+                dirs.push_back(entry);
+              } else {
+                files.push_back(entry);
+              }
+            }
+
+            // Сортируем по имени
+            auto sort_by_name = [](const fs::directory_entry& a,
+                                   const fs::directory_entry& b) {
+              return a.path().filename().string() <
+                     b.path().filename().string();
+            };
+
+            std::sort(dirs.begin(), dirs.end(), sort_by_name);
+            std::sort(files.begin(), files.end(), sort_by_name);
+
+            for (const auto& dir : dirs) {
+              auto new_node = std::make_shared<Node>();
+              new_node->is_dir = true;
+              new_node->text = dir.path().filename().string();
+              ui_ctx->files.push_back(new_node);
+
+              std::cout << "[DIR]  " << new_node->text << '\n';
+            }
+            for (const auto& file : files) {
+              auto new_node = std::make_shared<Node>();
+              new_node->text = file.path().filename().string();
+              ui_ctx->files.push_back(new_node);
+
+              std::cout << "[FILE] " << new_node->text << '\n';
+            }
+          }
+        }
         ImGui::TreePop();
       }
     }
@@ -110,7 +189,6 @@ void UI::update() {
         if (!master_popup->is_open()) {
           master_popup->open();
         } else {
-          nodes.clear();
           it = commands.erase(it);
         }
         break;
@@ -119,7 +197,7 @@ void UI::update() {
         if (!master_popup->is_open()) {
           master_popup->open();
         } else {
-          nodes.clear();
+          workspaces.clear();
           it = commands.erase(it);
         }
 
@@ -129,10 +207,19 @@ void UI::update() {
             auto node = std::make_shared<Node>();
             node->is_dir = true;
             node->text = path;
-            nodes.push_back(node);
+            workspaces.push_back(node);
           }
         }
 
+        break;
+      }
+      case Command_Kind_ShowAllViews: {
+        if (!master_popup->is_open()) {
+          master_popup->open();
+        } else {
+          files.clear();
+          it = commands.erase(it);
+        }
         break;
       }
       default: {
@@ -161,11 +248,11 @@ void UI::process_keybinds() {
   // Workspace
   if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) &&
       ImGui::IsKeyDown(ImGuiKey_LeftShift) && ImGui::IsKeyPressed(ImGuiKey_O)) {
-    std::cout << "[Ctrl+Shift+O] Show All Workspaces" << std::endl;
     Command cmd = {
         .kind = Command_Kind_ShowAllWorkspaces,
     };
     commands.push_back(cmd);
+    std::cout << "[Ctrl+Shift+O] Show All Workspaces" << std::endl;
     return;
   }
   if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) &&

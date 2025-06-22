@@ -49,6 +49,7 @@ enum Command_Kind {
   Command_Kind_None,
   Command_Kind_ShowAllCommands,
   Command_Kind_ShowAllWorkspaces,
+  Command_Kind_ShowAllViews,
 };
 
 struct Command {
@@ -58,12 +59,12 @@ struct Command {
 class UI {
   class Master_Popup {
    private:
-    const UI *ui_ctx;
+    UI *ui_ctx;
 
     std::string title;
 
    public:
-    Master_Popup(const UI *ui_ctx);
+    Master_Popup(UI *ui_ctx);
 
     void draw();
     void open();
@@ -77,7 +78,8 @@ class UI {
 
   std::shared_ptr<Master_Popup> master_popup;
 
-  std::vector<std::shared_ptr<Node>> nodes;
+  std::vector<std::shared_ptr<Node>> workspaces;
+  std::vector<std::shared_ptr<Node>> files;
   std::weak_ptr<Node> curr_node;
 
   std::vector<Command> commands;
