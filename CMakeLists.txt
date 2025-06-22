@@ -23,6 +23,8 @@ add_library(${PROJECT_NAME}_lib STATIC ${LIB_SOURCES})
 # Создаем исполняемый файл
 add_executable(${PROJECT_NAME} ${APP_SOURCES})
 
+add_subdirectory(tests)
+
 # Пути
 set(SRC_RES_DIR "${CMAKE_SOURCE_DIR}/res")
 set(RES_SYMLINK "${OUTPUT_DIR}/res")

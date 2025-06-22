@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <string>
 
-namespace Saura {
+namespace Saura::Utils {
 
 namespace fs = std::filesystem;
 

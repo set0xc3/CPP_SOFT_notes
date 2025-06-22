@@ -138,7 +138,7 @@ double OS::get_performance_counter() {
   return (double)SDL_GetPerformanceCounter();
 }
 
-std::string OS::get_safe_getenv(const std::string &key) {
+std::string OS::get_safe_getenv(const std::string key) {
   return SDL_getenv(key.c_str());
 }
 
@@ -164,5 +164,9 @@ fs::path OS::get_home_config_path() {
 #endif
 
   return res;
+}
+
+std::string OS::get_user_name() {
+  return get_safe_getenv("USERNAME");
 }
 }  // namespace Saura
