@@ -8,22 +8,24 @@
 #include "saura/core/os/os.hpp"
 #include "saura/ui/ui.hpp"
 
-namespace Saura {
+namespace Saura
+{
 
 using json = nlohmann::json;
 
-class App {
-private:
-  std::unique_ptr<UI> ui_ctx;
-  std::unique_ptr<OS> os_ctx;
-  bool is_running;
+class App
+{
+  private:
+	std::unique_ptr<UI> ui_ctx;
+	std::unique_ptr<OS> os_ctx;
+	bool				is_running;
 
-public:
-  App();
+  public:
+	App ();
 
-  void init();
-  void deinit();
-  void update();
+	void init ();
+	void deinit ();
+	void update ();
 };
 
 } // namespace Saura

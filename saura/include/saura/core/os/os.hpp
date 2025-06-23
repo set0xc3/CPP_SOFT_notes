@@ -8,39 +8,42 @@
 
 namespace fs = std::filesystem;
 
-namespace Saura {
-struct Window_Context {
-  int w, h;
-  std::string title;
-  SDL_Window *handle;
-  SDL_Renderer *renderer;
+namespace Saura
+{
+struct Window_Context
+{
+	int			  w, h;
+	std::string	  title;
+	SDL_Window*	  handle;
+	SDL_Renderer* renderer;
 };
 
-class OS {
- private:
-  std::unique_ptr<Window_Context> window_ctx;
+class OS
+{
+  private:
+	std::unique_ptr<Window_Context> window_ctx;
 
- public:
-  OS();
+  public:
+	OS ();
 
-  void init();
-  void deinit();
-  void update();
-  bool update_events();
-  void draw_begin();
-  void draw_end();
-  void sleep(double ms);
+	void init ();
+	void deinit ();
+	void update ();
+	bool update_events ();
+	void draw_begin ();
+	void draw_end ();
+	void sleep (double ms);
 
-  int get_window_width();
-  int get_window_height();
+	int get_window_width ();
+	int get_window_height ();
 
-  double get_performance_frequency();
-  double get_performance_counter();
+	double get_performance_frequency ();
+	double get_performance_counter ();
 
-  static std::string get_safe_getenv(const std::string key);
-  static fs::path get_home_config_path();
-  static std::string get_user_name();
+	static std::string get_safe_getenv (const std::string key);
+	static fs::path	   get_home_config_path ();
+	static std::string get_user_name ();
 };
-}  // namespace Saura
+} // namespace Saura
 
 #endif

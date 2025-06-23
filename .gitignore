@@ -1,4 +1,4 @@
 .cache/
-.vscode/
+.vscode/settings.json
 build/
 *.ini

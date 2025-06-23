@@ -31,67 +31,78 @@
 #include <string>
 #include <vector>
 
-namespace Saura {
-using Action = std::function<void()>;
+namespace Saura
+{
+using Action   = std::function<void ()>;
 using Key_Code = ImGuiKey;
 
-enum Area { Empty, Master_Popup, View };
-
-struct Node {
-  std::list<std::shared_ptr<Node>> node;
-  bool is_open;
-  bool is_dir;
-  std::string text;
-  std::string data;
+enum Area
+{
+	Empty,
+	Master_Popup,
+	View
 };
 
-enum Command_Kind {
-  Command_Kind_None,
-  Command_Kind_ShowAllCommands,
-  Command_Kind_ShowAllWorkspaces,
-  Command_Kind_ShowAllViews,
+struct Node
+{
+	std::list<std::shared_ptr<Node>> node;
+	bool							 is_open;
+	bool							 is_dir;
+	std::string						 text;
+	std::string						 data;
 };
 
-struct Command {
-  Command_Kind kind;
+enum Command_Kind
+{
+	Command_Kind_None,
+	Command_Kind_ShowAllCommands,
+	Command_Kind_ShowAllWorkspaces,
+	Command_Kind_ShowAllViews,
 };
 
-class UI {
-  class Master_Popup {
-   private:
-    UI *ui_ctx;
-
-    std::string title;
-
-   public:
-    Master_Popup(UI *ui_ctx);
-
-    void draw();
-    void open();
-
-    bool is_open();
-  };
-
- private:
-  ImVec2 root_size;
-  Area curr_area;
-
-  std::shared_ptr<Master_Popup> master_popup;
-
-  std::vector<std::shared_ptr<Node>> workspaces;
-  std::vector<std::shared_ptr<Node>> files;
-  std::weak_ptr<Node> curr_node;
-
-  std::vector<Command> commands;
-
- public:
-  UI();
-
-  void update();
-  void process_keybinds();
-
-  void set_root_size(const ImVec2 new_size);
+struct Command
+{
+	Command_Kind kind;
 };
-}  // namespace Saura
+
+class UI
+{
+	class Master_Popup
+	{
+	  private:
+		UI* ui_ctx;
+
+		std::string title;
+
+	  public:
+		Master_Popup (UI* ui_ctx);
+
+		void draw ();
+		void open ();
+
+		bool is_open ();
+	};
+
+  private:
+	ImVec2 root_size;
+	Area   curr_area;
+
+	std::shared_ptr<Master_Popup> master_popup;
+
+	std::vector<std::shared_ptr<Node>> workspaces;
+	std::vector<std::shared_ptr<Node>> files;
+	std::weak_ptr<Node>				   curr_node;
+
+	std::vector<Command> commands;
+
+  public:
+	UI ();
+
+	void update ();
+	void process_keybinds ();
+
+	void set_root_size (const ImVec2 new_size);
+};
+} // namespace Saura
 
 #endif

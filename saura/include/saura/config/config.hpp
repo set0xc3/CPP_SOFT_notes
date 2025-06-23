@@ -3,13 +3,16 @@
 
 #include <vendor/json/include/nlohmann/json.hpp>
 
-namespace Saura::Config {
+namespace Saura::Config
+{
 
 using json = nlohmann::json;
 
-json read_config();
-bool save_config(const json &new_config);
+json
+read_config ();
+bool
+save_config (const json& new_config);
 
-};  // namespace Saura::Config
+}; // namespace Saura::Config
 
 #endif
