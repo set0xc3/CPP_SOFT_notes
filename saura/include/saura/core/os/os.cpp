@@ -45,7 +45,7 @@ OS::init ()
 	{
 		throw std::runtime_error ("Failed SDL_CreateRenderer!");
 	}
-	SDL_SetRenderVSync (window_ctx->renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+	SDL_SetRenderVSync (window_ctx->renderer, SDL_RENDERER_VSYNC_DISABLED);
 	SDL_SetWindowPosition (window_ctx->handle, SDL_WINDOWPOS_CENTERED,
 						   SDL_WINDOWPOS_CENTERED);
 	SDL_ShowWindow (window_ctx->handle);

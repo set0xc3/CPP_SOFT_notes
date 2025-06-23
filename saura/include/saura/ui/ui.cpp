@@ -1,5 +1,6 @@
 #include "ui.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -8,6 +9,96 @@
 #include "saura/config/config.hpp"
 
 namespace fs = std::filesystem;
+
+// NOTE: TEST
+// ---------------------------------------------------------------------------
+// Camera state (could be globals or members of some struct/class)
+static ImVec2 camPos  = ImVec2 (0.0f, 0.0f); // world-space center
+static float  camZoom = 1.0f;				 // scale factor
+
+// ---------------------------------------------------------------------------
+// Utility: transform world->screen
+static ImVec2
+WorldToScreen (const ImVec2& world, const ImVec2& screenCenter)
+{
+	// translate so cameraPos is origin, scale, then shift to screen center
+	return ImVec2 (
+		(world.x - camPos.x) * camZoom + screenCenter.x,
+		(world.y - camPos.y) * camZoom + screenCenter.y);
+}
+
+// NOTE: TEST
+void
+Show2DCameraDemo ()
+{
+	// 1) Build a full-screen invisible window just to capture mouse/input
+	ImGui::SetNextWindowPos (ImVec2 (0, 0));
+	ImGui::SetNextWindowSize (ImGui::GetIO ().DisplaySize);
+	ImGui::Begin ("##CamCapture", nullptr,
+				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus);
+
+	ImDrawList* draw		 = ImGui::GetWindowDrawList ();
+	ImVec2		ioDisplay	 = ImGui::GetIO ().DisplaySize;
+	ImVec2		screenCenter = ImVec2 (ioDisplay.x * 0.5f, ioDisplay.y * 0.5f);
+
+	// 2) Handle zoom with mouse wheel
+	{
+		float wheel = ImGui::GetIO ().MouseWheel;
+		if (wheel != 0.0f)
+		{
+			// Optional: zoom toward mouse cursor
+			ImVec2 mouseScreen		= ImGui::GetIO ().MousePos;
+			ImVec2 mouseWorldBefore = ImVec2 (
+				(mouseScreen.x - screenCenter.x) / camZoom + camPos.x,
+				(mouseScreen.y - screenCenter.y) / camZoom + camPos.y);
+			camZoom = camZoom * (wheel > 0 ? 1.1f : 0.9f);
+			// clamp zoom
+			camZoom = std::clamp (camZoom, 0.1f, 10.0f);
+			// adjust camPos so that the point under cursor stays fixed
+			camPos = ImVec2 (
+				mouseWorldBefore.x - (mouseScreen.x - screenCenter.x) / camZoom,
+				mouseWorldBefore.y - (mouseScreen.y - screenCenter.y) / camZoom);
+		}
+	}
+
+	// 3) Handle panning with right mouse drag
+	if (ImGui::IsMouseDragging (ImGuiMouseButton_Right))
+	{
+		ImVec2 delta = ImGui::GetIO ().MouseDelta;
+		camPos.x -= delta.x / camZoom;
+		camPos.y -= delta.y / camZoom;
+	}
+
+	// 4) Draw your scene in “world space”
+	//    For demonstration: draw a grid + some shapes
+	const float GRID_SPACING = 50.0f;
+	const int	GRID_LINES	 = 40;
+
+	// Draw grid
+	for (int i = -GRID_LINES; i <= GRID_LINES; i++)
+	{
+		// vertical lines
+		ImVec2 w0 = WorldToScreen (ImVec2 (i * GRID_SPACING, -GRID_LINES * GRID_SPACING), screenCenter);
+		ImVec2 w1 = WorldToScreen (ImVec2 (i * GRID_SPACING, +GRID_LINES * GRID_SPACING), screenCenter);
+		draw->AddLine (w0, w1, IM_COL32 (200, 200, 200, 50));
+		// horizontal lines
+		ImVec2 h0 = WorldToScreen (ImVec2 (-GRID_LINES * GRID_SPACING, i * GRID_SPACING), screenCenter);
+		ImVec2 h1 = WorldToScreen (ImVec2 (+GRID_LINES * GRID_SPACING, i * GRID_SPACING), screenCenter);
+		draw->AddLine (h0, h1, IM_COL32 (200, 200, 200, 50));
+	}
+
+	// Draw a moving circle at world origin
+	float  t			= ImGui::GetTime ();
+	ImVec2 circleCenter = WorldToScreen (ImVec2 (sinf (t) * 200, cosf (t) * 150), screenCenter);
+	float  circleRadius = 30.0f * camZoom;
+	draw->AddCircleFilled (circleCenter, circleRadius, IM_COL32 (255, 100, 100, 200));
+
+	// 5) Optional UI overlay
+	ImGui::SetCursorScreenPos (ImVec2 (10, 10));
+	ImGui::Text ("Use Right-drag to pan, MouseWheel to zoom (%.2fx)", camZoom);
+
+	ImGui::End ();
+}
 
 namespace Saura
 {
@@ -206,15 +297,15 @@ UI::update ()
 
 	if (curr_node.lock () == nullptr)
 	{
-		ImGui::BeginChild ("##[buffer:empty]", {}, ImGuiChildFlags_Border);
-		{
-			const auto main_view_text = "- empty -";
-			auto	   main_view_size = ImGui::CalcTextSize (main_view_text);
-			ImGui::SetCursorPos ({(reg_avail.x - main_view_size.x) * 0.5f,
-								  (reg_avail.y - main_view_size.y) * 0.5f});
-			ImGui::Text ("%s", main_view_text);
-		}
-		ImGui::EndChild ();
+		// ImGui::BeginChild ("##[buffer:empty]", {}, ImGuiChildFlags_Border);
+		// {
+		// 	const auto main_view_text = "- empty -";
+		// 	auto	   main_view_size = ImGui::CalcTextSize (main_view_text);
+		// 	ImGui::SetCursorPos ({(reg_avail.x - main_view_size.x) * 0.5f,
+		// 						  (reg_avail.y - main_view_size.y) * 0.5f});
+		// 	ImGui::Text ("%s", main_view_text);
+		// }
+		// ImGui::EndChild ();
 	}
 	else
 	{
@@ -290,6 +381,8 @@ UI::update ()
 	}
 
 	master_popup->draw ();
+
+	Show2DCameraDemo ();
 
 	ImGui::End ();
 }

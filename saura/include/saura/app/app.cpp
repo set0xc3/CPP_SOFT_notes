@@ -41,11 +41,11 @@ App::update ()
 
 	while (is_running)
 	{
-		begin_counter = os_ctx->get_performance_counter ();
-
 		double counter_elapsed = begin_counter - end_counter;
 		double dt			   = counter_elapsed / perf_frequency;
 		double fps			   = perf_frequency / counter_elapsed;
+
+		begin_counter = os_ctx->get_performance_counter ();
 
 		if (dt >= period_max)
 		{
@@ -54,17 +54,19 @@ App::update ()
 				dt = period_max;
 			}
 
+			if (!os_ctx->update_events ())
+			{
+				is_running = false;
+			}
+
 			os_ctx->update ();
 			os_ctx->draw_begin ();
 			ui_ctx->set_root_size ({(float) os_ctx->get_window_width (),
 									(float) os_ctx->get_window_height ()});
 			ui_ctx->update ();
 			os_ctx->draw_end ();
-		}
 
-		if (!os_ctx->update_events ())
-		{
-			is_running = false;
+			end_counter = begin_counter;
 		}
 
 		os_ctx->sleep (period_max);
