@@ -10,7 +10,6 @@
 
 namespace fs = std::filesystem;
 
-// NOTE: TEST
 // ---------------------------------------------------------------------------
 // Camera state (could be globals or members of some struct/class)
 static ImVec2 camPos  = ImVec2 (0.0f, 0.0f); // world-space center
@@ -21,79 +20,112 @@ static float  camZoom = 1.0f;				 // scale factor
 static ImVec2
 WorldToScreen (const ImVec2& world, const ImVec2& screenCenter)
 {
-	// translate so cameraPos is origin, scale, then shift to screen center
 	return ImVec2 (
 		(world.x - camPos.x) * camZoom + screenCenter.x,
 		(world.y - camPos.y) * camZoom + screenCenter.y);
 }
 
-// NOTE: TEST
+// Utility: compute world bounds of the viewport
+static ImVec4
+GetWorldBounds (const ImVec2& screenSize, const ImVec2& screenCenter)
+{
+	ImVec2 topLeft = ImVec2 (
+		(0.0f - screenCenter.x) / camZoom + camPos.x,
+		(0.0f - screenCenter.y) / camZoom + camPos.y);
+	ImVec2 bottomRight = ImVec2 (
+		(screenSize.x - screenCenter.x) / camZoom + camPos.x,
+		(screenSize.y - screenCenter.y) / camZoom + camPos.y);
+	return ImVec4 (topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+}
+
+// ---------------------------------------------------------------------------
+// Demo
 void
 Show2DCameraDemo ()
 {
-	// 1) Build a full-screen invisible window just to capture mouse/input
+	ImGuiIO& io			  = ImGui::GetIO ();
+	ImVec2	 ioDisplay	  = io.DisplaySize;
+	ImVec2	 screenCenter = ImVec2 (ioDisplay.x * 0.5f, ioDisplay.y * 0.5f);
+
 	ImGui::SetNextWindowPos (ImVec2 (0, 0));
-	ImGui::SetNextWindowSize (ImGui::GetIO ().DisplaySize);
+	ImGui::SetNextWindowSize (ioDisplay);
 	ImGui::Begin ("##CamCapture", nullptr,
-				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus);
+				  ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+					  ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+					  ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBackground |
+					  ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-	ImDrawList* draw		 = ImGui::GetWindowDrawList ();
-	ImVec2		ioDisplay	 = ImGui::GetIO ().DisplaySize;
-	ImVec2		screenCenter = ImVec2 (ioDisplay.x * 0.5f, ioDisplay.y * 0.5f);
+	ImDrawList* draw = ImGui::GetWindowDrawList ();
 
-	// 2) Handle zoom with mouse wheel
+	// Zoom (mouse wheel)
+	float wheel = io.MouseWheel;
+	if (wheel != 0.0f)
 	{
-		float wheel = ImGui::GetIO ().MouseWheel;
-		if (wheel != 0.0f)
-		{
-			// Optional: zoom toward mouse cursor
-			ImVec2 mouseScreen		= ImGui::GetIO ().MousePos;
-			ImVec2 mouseWorldBefore = ImVec2 (
-				(mouseScreen.x - screenCenter.x) / camZoom + camPos.x,
-				(mouseScreen.y - screenCenter.y) / camZoom + camPos.y);
-			camZoom = camZoom * (wheel > 0 ? 1.1f : 0.9f);
-			// clamp zoom
-			camZoom = std::clamp (camZoom, 0.1f, 10.0f);
-			// adjust camPos so that the point under cursor stays fixed
-			camPos = ImVec2 (
-				mouseWorldBefore.x - (mouseScreen.x - screenCenter.x) / camZoom,
-				mouseWorldBefore.y - (mouseScreen.y - screenCenter.y) / camZoom);
-		}
+		ImVec2 mouseScreen = io.MousePos;
+		ImVec2 before	   = ImVec2 (
+			 (mouseScreen.x - screenCenter.x) / camZoom + camPos.x,
+			 (mouseScreen.y - screenCenter.y) / camZoom + camPos.y);
+
+		camZoom *= (wheel > 0) ? 1.1f : 0.9f;
+		camZoom = std::clamp (camZoom, 0.02f, 20.0f);
+
+		camPos = ImVec2 (
+			before.x - (mouseScreen.x - screenCenter.x) / camZoom,
+			before.y - (mouseScreen.y - screenCenter.y) / camZoom);
 	}
 
-	// 3) Handle panning with right mouse drag
+	// Panning (right mouse button)
 	if (ImGui::IsMouseDragging (ImGuiMouseButton_Right))
 	{
-		ImVec2 delta = ImGui::GetIO ().MouseDelta;
+		ImVec2 delta = io.MouseDelta;
 		camPos.x -= delta.x / camZoom;
 		camPos.y -= delta.y / camZoom;
 	}
 
-	// 4) Draw your scene in “world space”
-	//    For demonstration: draw a grid + some shapes
-	const float GRID_SPACING = 50.0f;
-	const int	GRID_LINES	 = 40;
+	// Draw adaptive grid
+	float baseSpacing = 50.0f;
+	float zoomLevel	  = camZoom;
 
-	// Draw grid
-	for (int i = -GRID_LINES; i <= GRID_LINES; i++)
+	// Snap spacing to power-of-two multiples
+	float spacing = baseSpacing;
+	while (spacing * zoomLevel < 20.0f)
+		spacing *= 2.0f;
+	while (spacing * zoomLevel > 100.0f)
+		spacing *= 0.5f;
+
+	ImVec4 bounds = GetWorldBounds (ioDisplay, screenCenter);
+
+	int xMin = static_cast<int> (std::floor (bounds.x / spacing));
+	int xMax = static_cast<int> (std::ceil (bounds.z / spacing));
+	int yMin = static_cast<int> (std::floor (bounds.y / spacing));
+	int yMax = static_cast<int> (std::ceil (bounds.w / spacing));
+
+	ImU32 gridColor = IM_COL32 (200, 200, 200, 50);
+	ImU32 axisColor = IM_COL32 (255, 255, 0, 100);
+
+	for (int x = xMin; x <= xMax; ++x)
 	{
-		// vertical lines
-		ImVec2 w0 = WorldToScreen (ImVec2 (i * GRID_SPACING, -GRID_LINES * GRID_SPACING), screenCenter);
-		ImVec2 w1 = WorldToScreen (ImVec2 (i * GRID_SPACING, +GRID_LINES * GRID_SPACING), screenCenter);
-		draw->AddLine (w0, w1, IM_COL32 (200, 200, 200, 50));
-		// horizontal lines
-		ImVec2 h0 = WorldToScreen (ImVec2 (-GRID_LINES * GRID_SPACING, i * GRID_SPACING), screenCenter);
-		ImVec2 h1 = WorldToScreen (ImVec2 (+GRID_LINES * GRID_SPACING, i * GRID_SPACING), screenCenter);
-		draw->AddLine (h0, h1, IM_COL32 (200, 200, 200, 50));
+		ImVec2 p0  = WorldToScreen (ImVec2 (x * spacing, bounds.y), screenCenter);
+		ImVec2 p1  = WorldToScreen (ImVec2 (x * spacing, bounds.w), screenCenter);
+		ImU32  col = (x == 0) ? axisColor : gridColor;
+		draw->AddLine (p0, p1, col);
 	}
 
-	// Draw a moving circle at world origin
+	for (int y = yMin; y <= yMax; ++y)
+	{
+		ImVec2 p0  = WorldToScreen (ImVec2 (bounds.x, y * spacing), screenCenter);
+		ImVec2 p1  = WorldToScreen (ImVec2 (bounds.z, y * spacing), screenCenter);
+		ImU32  col = (y == 0) ? axisColor : gridColor;
+		draw->AddLine (p0, p1, col);
+	}
+
+	// Draw animated circle
 	float  t			= ImGui::GetTime ();
 	ImVec2 circleCenter = WorldToScreen (ImVec2 (sinf (t) * 200, cosf (t) * 150), screenCenter);
 	float  circleRadius = 30.0f * camZoom;
 	draw->AddCircleFilled (circleCenter, circleRadius, IM_COL32 (255, 100, 100, 200));
 
-	// 5) Optional UI overlay
+	// UI Overlay
 	ImGui::SetCursorScreenPos (ImVec2 (10, 10));
 	ImGui::Text ("Use Right-drag to pan, MouseWheel to zoom (%.2fx)", camZoom);
 
